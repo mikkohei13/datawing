@@ -1,10 +1,22 @@
+import json
 import os
+from pathlib import Path
 
 import clickhouse_connect
 import pydeck as pdk
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
+
+SPECIES_COUNTS_CACHE = Path(__file__).parent / "species_counts_cache.json"
+
+
+def load_species_counts():
+    """Load species counts from cache file."""
+    if SPECIES_COUNTS_CACHE.exists():
+        with open(SPECIES_COUNTS_CACHE) as f:
+            return json.load(f)
+    return {}
 
 CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 
@@ -77,9 +89,13 @@ def index():
     dark_bg_style = "<style>html, body { background: #121212 !important; }</style>"
     map_html = map_html.replace("<head>", f"<head>{dark_bg_style}", 1)
 
+    species_counts = load_species_counts()
+
     return render_template(
         "index.html",
         map_html=map_html,
         all_species=all_species,
         selected_species=selected_species,
+        result_count=len(filtered_data),
+        species_counts=species_counts,
     )

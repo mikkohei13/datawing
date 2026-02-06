@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Seed sample species sighting data into ClickHouse."""
 
+import json
 import os
 from datetime import datetime
 from pathlib import Path
@@ -9,8 +10,8 @@ import clickhouse_connect
 
 CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 
-MAX_ROWS = 10000
-DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data-10k.txt"
+MAX_ROWS = 1000000
+DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data.txt"
 
 # Column indices from the TSV file
 COL_SPECIES = 0
@@ -122,6 +123,23 @@ def main():
     )
 
     print(f"Inserted {len(data)} species sightings")
+
+    # Update species counts cache
+    update_species_counts_cache(client)
+
+
+def update_species_counts_cache(client):
+    """Query species counts and write to cache file."""
+    result = client.query(
+        f"SELECT species_name, COUNT(*) as count FROM {TABLE_NAME} GROUP BY species_name"
+    )
+    counts = {row[0]: row[1] for row in result.result_rows}
+
+    cache_path = Path(__file__).parent.parent / "app" / "species_counts_cache.json"
+    with open(cache_path, "w") as f:
+        json.dump(counts, f)
+
+    print(f"Updated species counts cache with {len(counts)} species")
 
 
 if __name__ == "__main__":

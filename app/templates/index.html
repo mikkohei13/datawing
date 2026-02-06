@@ -17,6 +17,7 @@
             <iframe srcdoc="{{ map_html | e }}"></iframe>
         </div>
         <div class="sidebar">
+            <div class="result-count">{{ result_count }} results on map</div>
             <h2>Filter Species</h2>
             <div class="toggle-links">
                 <a onclick="selectAll()">Select All</a>
@@ -31,7 +32,8 @@
                         <label>
                             <input type="checkbox" name="species" value="{{ species }}"
                                 {% if species in selected_species %}checked{% endif %}>
-                            {{ species }}
+                            <span class="species-name">{{ species }}</span>
+                            <span class="species-count">{{ species_counts.get(species, 0) }}</span>
                         </label>
                     </li>
                     {% endfor %}
