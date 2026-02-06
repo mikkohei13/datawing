@@ -10,7 +10,8 @@ import clickhouse_connect
 
 CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 
-MAX_ROWS = 1000000
+MAX_ROWS = 10000000
+BATCH_SIZE = 100000
 DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data.txt"
 
 # Column indices from the TSV file
@@ -27,25 +28,28 @@ def parse_timestamp(time_str: str) -> datetime:
     return datetime.fromisoformat(time_str)
 
 
-def load_data_from_file(filepath: Path, max_rows: int) -> list:
-    """Load species sighting data from a TSV file.
+def iter_data_batches(filepath: Path, max_rows: int, batch_size: int):
+    """Yield batches of species sighting data from a TSV file.
 
-    Reads line-by-line for efficiency with large files.
+    Reads line-by-line and yields batches for memory-efficient processing.
     Skips rows where species, lat, lon, result_id, or time is empty.
 
     Args:
         filepath: Path to the TSV data file.
-        max_rows: Maximum number of valid rows to load.
+        max_rows: Maximum number of valid rows to process.
+        batch_size: Number of records per batch.
 
-    Returns:
-        List of tuples (id, species, time, lat, lon) where id is from result_id column.
+    Yields:
+        Lists of tuples (id, species, time, lat, lon).
     """
-    data = []
+    batch = []
+    total_count = 0
+
     with open(filepath, "r") as f:
         # Skip header line
         next(f)
         for line in f:
-            if len(data) >= max_rows:
+            if total_count >= max_rows:
                 break
 
             fields = line.rstrip("\n").split("\t")
@@ -61,15 +65,22 @@ def load_data_from_file(filepath: Path, max_rows: int) -> list:
             if not species or not result_id or not time_str or not lat or not lon:
                 continue
 
-            data.append((
+            batch.append((
                 result_id,
                 species,
                 parse_timestamp(time_str),
                 float(lat),
                 float(lon),
             ))
+            total_count += 1
 
-    return data
+            if len(batch) >= batch_size:
+                yield batch
+                batch = []
+
+    # Yield remaining records
+    if batch:
+        yield batch
 
 
 TABLE_NAME = "species_sightings"
@@ -91,7 +102,7 @@ def create_table(client):
             latitude Float64,
             longitude Float64
         ) ENGINE = MergeTree()
-        ORDER BY (time, id)
+        ORDER BY (species_name, latitude, longitude, time, id)
     """)
 
 
@@ -112,17 +123,18 @@ def main():
     create_table(client)
     print(f"Created table '{TABLE_NAME}'.")
 
-    # Load data from file
-    data = load_data_from_file(DATA_FILE, MAX_ROWS)
+    print(f"Loading and inserting up to {MAX_ROWS:,} records from {DATA_FILE}...")
 
-    # Insert data
-    client.insert(
-        TABLE_NAME,
-        data,
-        column_names=["id", "species_name", "time", "latitude", "longitude"],
-    )
+    # Stream data in batches: read and insert each batch
+    total_inserted = 0
+    column_names = ["id", "species_name", "time", "latitude", "longitude"]
 
-    print(f"Inserted {len(data)} species sightings")
+    for batch in iter_data_batches(DATA_FILE, MAX_ROWS, BATCH_SIZE):
+        client.insert(TABLE_NAME, batch, column_names=column_names)
+        total_inserted += len(batch)
+        print(f"Inserted {total_inserted:,} records...")
+
+    print(f"Done. Inserted {total_inserted:,} species sightings")
 
     # Update species counts cache
     update_species_counts_cache(client)
