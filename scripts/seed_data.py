@@ -2,6 +2,7 @@
 """Seed sample species sighting data into ClickHouse."""
 
 import os
+from datetime import datetime
 from pathlib import Path
 
 import clickhouse_connect
@@ -14,22 +15,29 @@ DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data-100.txt"
 # Column indices from the TSV file
 COL_SPECIES = 0
 COL_RESULT_ID = 5
+COL_TIME = 10
 COL_LAT = 17
 COL_LON = 18
+
+
+def parse_timestamp(time_str: str) -> datetime:
+    """Parse ISO 8601 timestamp string to datetime."""
+    # Handle format like '2025-05-16T11:43:27.235000'
+    return datetime.fromisoformat(time_str)
 
 
 def load_data_from_file(filepath: Path, max_rows: int) -> list:
     """Load species sighting data from a TSV file.
 
     Reads line-by-line for efficiency with large files.
-    Skips rows where species, lat, lon, or result_id is empty.
+    Skips rows where species, lat, lon, result_id, or time is empty.
 
     Args:
         filepath: Path to the TSV data file.
         max_rows: Maximum number of valid rows to load.
 
     Returns:
-        List of tuples (id, species, lat, lon) where id is from result_id column.
+        List of tuples (id, species, time, lat, lon) where id is from result_id column.
     """
     data = []
     with open(filepath, "r") as f:
@@ -44,14 +52,21 @@ def load_data_from_file(filepath: Path, max_rows: int) -> list:
             # Extract required fields
             species = fields[COL_SPECIES] if len(fields) > COL_SPECIES else ""
             result_id = fields[COL_RESULT_ID] if len(fields) > COL_RESULT_ID else ""
+            time_str = fields[COL_TIME] if len(fields) > COL_TIME else ""
             lat = fields[COL_LAT] if len(fields) > COL_LAT else ""
             lon = fields[COL_LON] if len(fields) > COL_LON else ""
 
             # Skip row if any required field is empty
-            if not species or not result_id or not lat or not lon:
+            if not species or not result_id or not time_str or not lat or not lon:
                 continue
 
-            data.append((result_id, species, float(lat), float(lon)))
+            data.append((
+                result_id,
+                species,
+                parse_timestamp(time_str),
+                float(lat),
+                float(lon),
+            ))
 
     return data
 
@@ -71,10 +86,11 @@ def create_table(client):
         CREATE TABLE {TABLE_NAME} (
             id String,
             species_name String,
+            time DateTime64(3),
             latitude Float64,
             longitude Float64
         ) ENGINE = MergeTree()
-        ORDER BY id
+        ORDER BY (time, id)
     """)
 
 
@@ -102,7 +118,7 @@ def main():
     client.insert(
         TABLE_NAME,
         data,
-        column_names=["id", "species_name", "latitude", "longitude"],
+        column_names=["id", "species_name", "time", "latitude", "longitude"],
     )
 
     print(f"Inserted {len(data)} species sightings")
