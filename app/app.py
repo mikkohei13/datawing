@@ -136,6 +136,40 @@ def index():
     dark_bg_style = "<style>html, body { background: #121212 !important; }</style>"
     map_html = map_html.replace("<head>", f"<head>{dark_bg_style}", 1)
 
+    # Histogram query: observation counts in 7-day (weekly) buckets.
+    # Uses the same species filter as the map.
+    if filtering:
+        hist_query = f"""
+            SELECT
+                toMonday(toDate(time)) AS week,
+                COUNT(*) AS count
+            FROM species_sightings
+            WHERE species_name IN ({placeholders})
+            GROUP BY week
+            ORDER BY week
+        """
+        hist_result = client.query(hist_query, parameters=selected_species)
+    else:
+        hist_result = client.query("""
+            SELECT
+                toMonday(toDate(time)) AS week,
+                COUNT(*) AS count
+            FROM species_sightings
+            GROUP BY week
+            ORDER BY week
+        """)
+
+    max_count = max((row[1] for row in hist_result.result_rows), default=1)
+    histogram_data = [
+        {
+            "week": row[0].strftime("%Y-%m-%d"),
+            "label": row[0].strftime("%b %d"),
+            "count": row[1],
+            "height_pct": 100 * row[1] / max_count,
+        }
+        for row in hist_result.result_rows
+    ]
+
     species_counts = load_species_counts()
 
     return render_template(
@@ -145,4 +179,5 @@ def index():
         selected_species=selected_species,
         result_count=total_records,
         species_counts=species_counts,
+        histogram_data=histogram_data,
     )
