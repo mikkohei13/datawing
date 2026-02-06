@@ -9,8 +9,8 @@ import clickhouse_connect
 
 CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 
-MAX_ROWS = 100
-DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data-100.txt"
+MAX_ROWS = 10000
+DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data-10k.txt"
 
 # Column indices from the TSV file
 COL_SPECIES = 0

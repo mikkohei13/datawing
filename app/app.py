@@ -2,7 +2,7 @@ import os
 
 import clickhouse_connect
 import pydeck as pdk
-from flask import Flask
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
@@ -36,10 +36,21 @@ def index():
         <pre>docker compose exec app python scripts/seed_data.py</pre>
         """
 
+    # Get unique species for filter
+    all_species = sorted(set(d["species_name"] for d in data))
+
+    # Get selected species from query params (default to all)
+    selected_species = request.args.getlist("species")
+    if not selected_species:
+        selected_species = all_species
+
+    # Filter data by selected species
+    filtered_data = [d for d in data if d["species_name"] in selected_species]
+
     # Create pydeck visualization
     layer = pdk.Layer(
         "ScatterplotLayer",
-        data=data,
+        data=filtered_data,
         get_position=["longitude", "latitude"],
         get_radius=50000,
         get_fill_color=[255, 140, 0, 200],
@@ -60,4 +71,15 @@ def index():
         tooltip={"text": "{species_name}"},
     )
 
-    return deck.to_html(as_string=True)
+    map_html = deck.to_html(as_string=True)
+
+    # Inject dark background to prevent white flash inside iframe
+    dark_bg_style = "<style>html, body { background: #121212 !important; }</style>"
+    map_html = map_html.replace("<head>", f"<head>{dark_bg_style}", 1)
+
+    return render_template(
+        "index.html",
+        map_html=map_html,
+        all_species=all_species,
+        selected_species=selected_species,
+    )
