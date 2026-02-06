@@ -31,7 +31,7 @@ def index():
 
     if not data:
         return """
-        <h1>No data yet</h1>
+        <h1>No data yet!</h1>
         <p>Run the seed script to populate data:</p>
         <pre>docker compose exec app python scripts/seed_data.py</pre>
         """

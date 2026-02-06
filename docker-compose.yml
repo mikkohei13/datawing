@@ -17,11 +17,14 @@ services:
       - "5000:5000"
     volumes:
       - ./app:/app
-      - ./scripts:/app/scripts
+      - ./scripts:/scripts
+      - ./data:/data
     depends_on:
       - clickhouse
     environment:
       - FLASK_DEBUG=1
+      - FLASK_APP=app.py
+      - TEMPLATES_AUTO_RELOAD=1
       - CLICKHOUSE_HOST=clickhouse
 
 volumes:

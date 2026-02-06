@@ -1,3 +1,4 @@
 flask
 pydeck
 clickhouse-connect
+watchdog
