@@ -2,6 +2,8 @@
 **/data/**
 .env
 
+scripts/analyze_grid.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
