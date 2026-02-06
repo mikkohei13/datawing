@@ -202,3 +202,25 @@ body {
     cursor: pointer;
     accent-color: #ff8c00;
 }
+.point-size-control {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+.point-size-control label {
+    display: block;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 8px;
+}
+.point-size-control #point-size-value {
+    font-weight: 600;
+    color: #ff8c00;
+}
+.point-size-control input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+    accent-color: #ff8c00;
+}

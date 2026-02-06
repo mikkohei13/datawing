@@ -92,6 +92,13 @@ def index():
     if color_mode not in ("single", "species"):
         color_mode = "single"
 
+    # Get point size from query params (default to 6 pixels)
+    try:
+        point_size = int(request.args.get("point_size", 6))
+        point_size = max(2, min(20, point_size))  # Clamp to [2, 20]
+    except (ValueError, TypeError):
+        point_size = 6
+
     # Generate species colors for "species" color mode
     species_colors = generate_species_colors(all_species)
 
@@ -153,22 +160,20 @@ def index():
             "longitude": lon,
             "count": count,
             "tooltip": format_tooltip(count, species_list, earliest, latest),
-            # Scale radius by sqrt(count) so area is proportional to count
-#            "radius": 1000 * math.sqrt(count),
-            "radius": 15,
+            "radius": point_size,
             "color": [r, g, b, alpha],
         })
 
     # Create pydeck visualization
+    # Use radiusMinPixels and radiusMaxPixels to enforce fixed pixel size
     layer = pdk.Layer(
         "ScatterplotLayer",
         data=data,
         get_position=["longitude", "latitude"],
-        get_radius="radius",
         get_fill_color="color",
         pickable=True,
-        radius_min_pixels=3,
-        radius_max_pixels=15,
+        radius_min_pixels=point_size,
+        radius_max_pixels=point_size,
     )
 
     view_state = pdk.ViewState(
@@ -241,4 +246,5 @@ def index():
         histogram_data=histogram_data,
         opacity=base_opacity,
         color_mode=color_mode,
+        point_size=point_size,
     )
