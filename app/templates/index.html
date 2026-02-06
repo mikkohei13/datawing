@@ -61,12 +61,13 @@
                         oninput="document.getElementById('point-size-value').textContent = this.value">
                 </div>
                 <button type="submit" class="btn-apply">Apply Filter</button>
-                <ul class="species-list">
+                <ul class="species-list" id="species-list">
                     {% for species in all_species %}
-                    <li>
+                    <li data-count="{{ species_counts.get(species, 0) }}">
                         <label>
                             <input type="checkbox" name="species" value="{{ species }}"
-                                {% if species in selected_species %}checked{% endif %}>
+                                {% if species in selected_species %}checked{% endif %}
+                                onchange="sortSpeciesList()">
                             <span class="species-name">{{ species }}</span>
                             <span class="species-count">{{ species_counts.get(species, 0) }}</span>
                         </label>
@@ -79,10 +80,35 @@
     <script>
         function selectAll() {
             document.querySelectorAll('.species-list input[type="checkbox"]').forEach(cb => cb.checked = true);
+            sortSpeciesList();
         }
         function clearAll() {
             document.querySelectorAll('.species-list input[type="checkbox"]').forEach(cb => cb.checked = false);
+            sortSpeciesList();
         }
+        function sortSpeciesList() {
+            const list = document.getElementById('species-list');
+            const items = Array.from(list.querySelectorAll('li'));
+            
+            items.sort((a, b) => {
+                const aChecked = a.querySelector('input[type="checkbox"]').checked;
+                const bChecked = b.querySelector('input[type="checkbox"]').checked;
+                const aCount = parseInt(a.dataset.count, 10);
+                const bCount = parseInt(b.dataset.count, 10);
+                
+                // Checked items come first
+                if (aChecked !== bChecked) {
+                    return aChecked ? -1 : 1;
+                }
+                // Within same checked state, sort by count descending
+                return bCount - aCount;
+            });
+            
+            // Re-append items in sorted order
+            items.forEach(item => list.appendChild(item));
+        }
+        // Sort on initial page load
+        sortSpeciesList();
     </script>
 </body>
 </html>
