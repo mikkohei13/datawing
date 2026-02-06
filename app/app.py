@@ -44,12 +44,14 @@ def index():
         get_radius=50000,
         get_fill_color=[255, 140, 0, 200],
         pickable=True,
+        radius_min_pixels=3,
+        radius_max_pixels=15,
     )
 
     view_state = pdk.ViewState(
-        latitude=0,
-        longitude=0,
-        zoom=1,
+        latitude=65.062,
+        longitude=26.719,
+        zoom=5,
     )
 
     deck = pdk.Deck(
