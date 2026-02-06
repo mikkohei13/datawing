@@ -152,3 +152,53 @@ body {
     color: #999;
     margin: 0 6px;
 }
+.color-mode-control {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+.color-mode-control .control-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+.color-mode-control .radio-label {
+    display: block;
+    font-size: 14px;
+    color: #444;
+    cursor: pointer;
+    padding: 4px 0;
+}
+.color-mode-control .radio-label:hover {
+    color: #ff8c00;
+}
+.color-mode-control input[type="radio"] {
+    margin-right: 8px;
+    accent-color: #ff8c00;
+}
+.opacity-control {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+.opacity-control label {
+    display: block;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 8px;
+}
+.opacity-control #opacity-value {
+    font-weight: 600;
+    color: #ff8c00;
+}
+.opacity-control input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+    accent-color: #ff8c00;
+}

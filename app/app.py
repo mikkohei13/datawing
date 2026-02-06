@@ -1,3 +1,4 @@
+import colorsys
 import json
 import math
 import os
@@ -8,6 +9,25 @@ import pydeck as pdk
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
+
+# Golden ratio conjugate for optimal hue distribution
+GOLDEN_RATIO_CONJUGATE = 0.618033988749895
+
+
+def generate_species_colors(species_list):
+    """Generate distinct colors for each species using golden ratio hue distribution.
+    
+    Returns a dict mapping species name to RGB tuple (r, g, b).
+    Colors are bright and visible against dark backgrounds.
+    """
+    colors = {}
+    hue = 0.0
+    for species in sorted(species_list):
+        # Use high saturation and lightness for visibility on dark background
+        r, g, b = colorsys.hls_to_rgb(hue, 0.6, 0.9)
+        colors[species] = (int(r * 255), int(g * 255), int(b * 255))
+        hue = (hue + GOLDEN_RATIO_CONJUGATE) % 1.0
+    return colors
 
 SPECIES_COUNTS_CACHE = Path(__file__).parent / "species_counts_cache.json"
 
@@ -60,6 +80,21 @@ def index():
     if not selected_species:
         selected_species = all_species
 
+    # Get opacity setting from query params (default to 0.5)
+    try:
+        base_opacity = float(request.args.get("opacity", 0.5))
+        base_opacity = max(0.0, min(1.0, base_opacity))  # Clamp to [0, 1]
+    except (ValueError, TypeError):
+        base_opacity = 0.5
+
+    # Get color mode from query params (default to "single")
+    color_mode = request.args.get("color_mode", "single")
+    if color_mode not in ("single", "species"):
+        color_mode = "single"
+
+    # Generate species colors for "species" color mode
+    species_colors = generate_species_colors(all_species)
+
     # Aggregation query: one row per grid cell with count, species list, date range.
     # Push species filter into WHERE clause so ClickHouse does the filtering.
     filtering = len(selected_species) < len(all_species)
@@ -97,13 +132,31 @@ def index():
     for row in result.result_rows:
         lat, lon, count, species_list, earliest, latest = row
         total_records += count
+        # Calculate opacity: base_opacity * count, capped at 1.0, then convert to 0-255
+        point_opacity = min(1.0, base_opacity * count)
+        alpha = int(point_opacity * 255)
+
+        # Determine color based on color mode
+        if color_mode == "species":
+            if len(species_list) == 1:
+                # Single species: use its assigned color
+                r, g, b = species_colors.get(species_list[0], (255, 140, 0))
+            else:
+                # Multi-species: use neutral white
+                r, g, b = 255, 255, 255
+        else:
+            # Single color mode: orange
+            r, g, b = 255, 140, 0
+
         data.append({
             "latitude": lat,
             "longitude": lon,
             "count": count,
             "tooltip": format_tooltip(count, species_list, earliest, latest),
             # Scale radius by sqrt(count) so area is proportional to count
-            "radius": 1000 * math.sqrt(count),
+#            "radius": 1000 * math.sqrt(count),
+            "radius": 15,
+            "color": [r, g, b, alpha],
         })
 
     # Create pydeck visualization
@@ -112,7 +165,7 @@ def index():
         data=data,
         get_position=["longitude", "latitude"],
         get_radius="radius",
-        get_fill_color=[255, 140, 0, 200],
+        get_fill_color="color",
         pickable=True,
         radius_min_pixels=3,
         radius_max_pixels=15,
@@ -172,12 +225,20 @@ def index():
 
     species_counts = load_species_counts()
 
+    # Sort species by count in descending order
+    all_species_sorted = sorted(
+        all_species, key=lambda s: species_counts.get(s, 0), reverse=True
+    )
+
     return render_template(
         "index.html",
         map_html=map_html,
-        all_species=all_species,
+        all_species=all_species_sorted,
         selected_species=selected_species,
         result_count=total_records,
+        cell_count=len(data),
         species_counts=species_counts,
         histogram_data=histogram_data,
+        opacity=base_opacity,
+        color_mode=color_mode,
     )

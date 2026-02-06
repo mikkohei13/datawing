@@ -29,7 +29,7 @@
             </div>
         </div>
         <div class="sidebar">
-            <div class="result-count">{{ result_count }} results on map</div>
+            <div class="result-count">{{ result_count }} records in {{ cell_count }} cells</div>
             <h2>Filter Species</h2>
             <div class="toggle-links">
                 <a onclick="selectAll()">Select All</a>
@@ -37,6 +37,24 @@
                 <a onclick="clearAll()">Clear All</a>
             </div>
             <form method="GET" action="/">
+                <div class="color-mode-control">
+                    <span class="control-label">Color Mode</span>
+                    <label class="radio-label">
+                        <input type="radio" name="color_mode" value="single"
+                            {% if color_mode == 'single' %}checked{% endif %}>
+                        Single Color
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="color_mode" value="species"
+                            {% if color_mode == 'species' %}checked{% endif %}>
+                        By Species
+                    </label>
+                </div>
+                <div class="opacity-control">
+                    <label for="opacity">Opacity: <span id="opacity-value">{{ opacity }}</span></label>
+                    <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.05" value="{{ opacity }}"
+                        oninput="document.getElementById('opacity-value').textContent = this.value">
+                </div>
                 <button type="submit" class="btn-apply">Apply Filter</button>
                 <ul class="species-list">
                     {% for species in all_species %}
