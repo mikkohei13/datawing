@@ -68,6 +68,9 @@ def index():
     except (ValueError, TypeError):
         point_size = 6
 
+    # Whether dots should scale with the map zoom level
+    scale_with_map = request.args.get("scale_with_map") == "on"
+
     # Only query data if a species is selected
     total_records = 0
     data = []
@@ -94,12 +97,15 @@ def index():
             point_opacity = min(1.0, base_opacity * count)
             alpha = int(point_opacity * 255)
 
+            # In scale-with-map mode, radius is fixed
+            radius_value = 500 if scale_with_map else point_size
+
             data.append({
                 "latitude": lat,
                 "longitude": lon,
                 "count": count,
                 "tooltip": format_tooltip(count, earliest, latest),
-                "radius": point_size,
+                "radius": radius_value,
                 "color": [255, 140, 0, alpha],
             })
 
@@ -126,15 +132,26 @@ def index():
         ]
 
     # Create pydeck visualization
-    layer = pdk.Layer(
-        "ScatterplotLayer",
-        data=data,
-        get_position=["longitude", "latitude"],
-        get_fill_color="color",
-        pickable=True,
-        radius_min_pixels=point_size,
-        radius_max_pixels=point_size,
-    )
+    if scale_with_map:
+        layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=data,
+            get_position=["longitude", "latitude"],
+            get_fill_color="color",
+            get_radius="radius",
+            pickable=True,
+            radius_min_pixels=1,
+        )
+    else:
+        layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=data,
+            get_position=["longitude", "latitude"],
+            get_fill_color="color",
+            pickable=True,
+            radius_min_pixels=point_size,
+            radius_max_pixels=point_size,
+        )
 
     view_state = pdk.ViewState(
         latitude=65.062,
@@ -172,4 +189,5 @@ def index():
         histogram_data=histogram_data,
         opacity=base_opacity,
         point_size=point_size,
+        scale_with_map=scale_with_map,
     )

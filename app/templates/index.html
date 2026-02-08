@@ -37,7 +37,16 @@
                     <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.05" value="{{ opacity }}"
                         oninput="document.getElementById('opacity-value').textContent = this.value">
                 </div>
-                <div class="point-size-control">
+                <div class="scale-control">
+                    <label class="toggle-label">
+                        <span class="toggle-text">Scale dots with map</span>
+                        <input type="checkbox" id="scale_with_map" name="scale_with_map"
+                            {% if scale_with_map %}checked{% endif %}
+                            onchange="document.getElementById('point-size-group').classList.toggle('disabled', this.checked)">
+                        <span class="toggle-switch"></span>
+                    </label>
+                </div>
+                <div class="point-size-control {% if scale_with_map %}disabled{% endif %}" id="point-size-group">
                     <label for="point_size">Point Size: <span id="point-size-value">{{ point_size }}</span>px</label>
                     <input type="range" id="point_size" name="point_size" min="2" max="20" step="1" value="{{ point_size }}"
                         oninput="document.getElementById('point-size-value').textContent = this.value">
