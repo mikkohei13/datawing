@@ -6,11 +6,16 @@ System to visualize large-scale biodiversity occurrence data. Proof of concept, 
 
 **Tech stack:** Flask, ClickHouse, pydeck (deck.gl), Docker Compose.
 
+**Architecture:** Server-heavy, client-light. The Flask backend does all querying, aggregation, and visualization generation. The browser receives a fully rendered page with no AJAX calls or client-side frameworks. User interactions (filtering, changing settings) trigger full page reloads via GET query parameters.
+
 **Data flow:**
-1. Seed script inserts species occurrence records (name, lat, lon) into ClickHouse
-2. Flask queries ClickHouse for all sightings
-3. pydeck renders sightings on a world map
-4. Map is served as self-contained HTML with embedded deck.gl
+1. A seed script reads source data (TSV) and batch-inserts occurrence records into ClickHouse
+2. On each page load, Flask runs aggregation queries against ClickHouse (grouping by coordinates, filtering by species) and computes per-point colors, opacity, and tooltips
+3. pydeck generates a self-contained HTML document with embedded deck.gl JavaScript and all point data as inline JSON
+4. Flask embeds this map HTML into a Jinja2 template via an iframe (`srcdoc`), alongside server-rendered sidebar controls and charts
+5. The map lives inside an iframe because pydeck produces a standalone page — the sidebar and map cannot communicate via DOM, which is why filter changes require a full reload
+
+**Key implication:** All occurrence data for the current filter is baked into the page as inline JSON. There is no dynamic tile server or vector tile pipeline. This keeps the stack simple but means page size grows with the number of visible data points.
 
 ## Run
 
