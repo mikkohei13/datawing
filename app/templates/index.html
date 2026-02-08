@@ -30,26 +30,8 @@
         </div>
         <div class="sidebar">
             <div class="result-count">{{ result_count }} records in {{ cell_count }} cells</div>
-            <h2>Filter Species</h2>
-            <div class="toggle-links">
-                <a onclick="selectAll()">Select All</a>
-                <span>|</span>
-                <a onclick="clearAll()">Clear All</a>
-            </div>
+            <h2>Select Species</h2>
             <form method="GET" action="/">
-                <div class="color-mode-control">
-                    <span class="control-label">Color Mode</span>
-                    <label class="radio-label">
-                        <input type="radio" name="color_mode" value="single"
-                            {% if color_mode == 'single' %}checked{% endif %}>
-                        Single Color
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="color_mode" value="species"
-                            {% if color_mode == 'species' %}checked{% endif %}>
-                        By Species
-                    </label>
-                </div>
                 <div class="opacity-control">
                     <label for="opacity">Opacity: <span id="opacity-value">{{ opacity }}</span></label>
                     <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.05" value="{{ opacity }}"
@@ -60,14 +42,13 @@
                     <input type="range" id="point_size" name="point_size" min="2" max="20" step="1" value="{{ point_size }}"
                         oninput="document.getElementById('point-size-value').textContent = this.value">
                 </div>
-                <button type="submit" class="btn-apply">Apply Filter</button>
+                <button type="submit" class="btn-apply">Apply</button>
                 <ul class="species-list" id="species-list">
                     {% for species in all_species %}
-                    <li data-count="{{ species_counts.get(species, 0) }}">
+                    <li>
                         <label>
-                            <input type="checkbox" name="species" value="{{ species }}"
-                                {% if species in selected_species %}checked{% endif %}
-                                onchange="sortSpeciesList()">
+                            <input type="radio" name="species" value="{{ species }}"
+                                {% if species == selected_species %}checked{% endif %}>
                             <span class="species-name">{{ species }}</span>
                             <span class="species-count">{{ species_counts.get(species, 0) }}</span>
                         </label>
@@ -77,38 +58,5 @@
             </form>
         </div>
     </div>
-    <script>
-        function selectAll() {
-            document.querySelectorAll('.species-list input[type="checkbox"]').forEach(cb => cb.checked = true);
-            sortSpeciesList();
-        }
-        function clearAll() {
-            document.querySelectorAll('.species-list input[type="checkbox"]').forEach(cb => cb.checked = false);
-            sortSpeciesList();
-        }
-        function sortSpeciesList() {
-            const list = document.getElementById('species-list');
-            const items = Array.from(list.querySelectorAll('li'));
-            
-            items.sort((a, b) => {
-                const aChecked = a.querySelector('input[type="checkbox"]').checked;
-                const bChecked = b.querySelector('input[type="checkbox"]').checked;
-                const aCount = parseInt(a.dataset.count, 10);
-                const bCount = parseInt(b.dataset.count, 10);
-                
-                // Checked items come first
-                if (aChecked !== bChecked) {
-                    return aChecked ? -1 : 1;
-                }
-                // Within same checked state, sort by count descending
-                return bCount - aCount;
-            });
-            
-            // Re-append items in sorted order
-            items.forEach(item => list.appendChild(item));
-        }
-        // Sort on initial page load
-        sortSpeciesList();
-    </script>
 </body>
 </html>

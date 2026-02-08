@@ -1,6 +1,4 @@
-import colorsys
 import json
-import math
 import os
 from pathlib import Path
 
@@ -9,25 +7,6 @@ import pydeck as pdk
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
-
-# Golden ratio conjugate for optimal hue distribution
-GOLDEN_RATIO_CONJUGATE = 0.618033988749895
-
-
-def generate_species_colors(species_list):
-    """Generate distinct colors for each species using golden ratio hue distribution.
-    
-    Returns a dict mapping species name to RGB tuple (r, g, b).
-    Colors are bright and visible against dark backgrounds.
-    """
-    colors = {}
-    hue = 0.0
-    for species in sorted(species_list):
-        # Use high saturation and lightness for visibility on dark background
-        r, g, b = colorsys.hls_to_rgb(hue, 0.6, 0.9)
-        colors[species] = (int(r * 255), int(g * 255), int(b * 255))
-        hue = (hue + GOLDEN_RATIO_CONJUGATE) % 1.0
-    return colors
 
 SPECIES_COUNTS_CACHE = Path(__file__).parent / "species_counts_cache.json"
 
@@ -46,13 +25,10 @@ def get_client():
     return clickhouse_connect.get_client(host=CLICKHOUSE_HOST)
 
 
-def format_tooltip(count, species_list, earliest, latest):
+def format_tooltip(count, earliest, latest):
     """Build a tooltip string for an aggregated grid cell."""
-    n_species = len(species_list)
-    header = f"{count} records | {n_species} species"
-    species_str = ", ".join(sorted(species_list))
     date_str = f"{earliest.strftime('%Y-%m-%d')} — {latest.strftime('%Y-%m-%d')}"
-    return f"{header}\n{species_str}\n{date_str}"
+    return f"{count} records\n{date_str}"
 
 
 @app.route("/")
@@ -75,10 +51,8 @@ def index():
         <pre>docker compose exec app python scripts/seed_data.py</pre>
         """
 
-    # Get selected species from query params (default to all)
-    selected_species = request.args.getlist("species")
-    if not selected_species:
-        selected_species = all_species
+    # Get selected species from query params (single value, None if not set)
+    selected_species = request.args.get("species")
 
     # Get opacity setting from query params (default to 0.5)
     try:
@@ -87,11 +61,6 @@ def index():
     except (ValueError, TypeError):
         base_opacity = 0.5
 
-    # Get color mode from query params (default to "single")
-    color_mode = request.args.get("color_mode", "single")
-    if color_mode not in ("single", "species"):
-        color_mode = "single"
-
     # Get point size from query params (default to 6 pixels)
     try:
         point_size = int(request.args.get("point_size", 6))
@@ -99,73 +68,64 @@ def index():
     except (ValueError, TypeError):
         point_size = 6
 
-    # Generate species colors for "species" color mode
-    species_colors = generate_species_colors(all_species)
+    # Only query data if a species is selected
+    total_records = 0
+    data = []
+    histogram_data = []
 
-    # Aggregation query: one row per grid cell with count, species list, date range.
-    # Push species filter into WHERE clause so ClickHouse does the filtering.
-    filtering = len(selected_species) < len(all_species)
-    if filtering:
-        placeholders = ", ".join(["%s"] * len(selected_species))
-        query = f"""
-            SELECT
-                latitude,
-                longitude,
-                COUNT(*) AS count,
-                groupUniqArray(species_name) AS species,
-                min(time) AS earliest,
-                max(time) AS latest
-            FROM species_sightings
-            WHERE species_name IN ({placeholders})
-            GROUP BY latitude, longitude
-        """
-        result = client.query(query, parameters=selected_species)
-    else:
+    if selected_species:
+        # Aggregation query: one row per grid cell with count and date range.
         result = client.query("""
             SELECT
                 latitude,
                 longitude,
                 COUNT(*) AS count,
-                groupUniqArray(species_name) AS species,
                 min(time) AS earliest,
                 max(time) AS latest
             FROM species_sightings
+            WHERE species_name = %s
             GROUP BY latitude, longitude
-        """)
+        """, parameters=[selected_species])
 
-    # Build pydeck data from aggregated rows
-    total_records = 0
-    data = []
-    for row in result.result_rows:
-        lat, lon, count, species_list, earliest, latest = row
-        total_records += count
-        # Calculate opacity: base_opacity * count, capped at 1.0, then convert to 0-255
-        point_opacity = min(1.0, base_opacity * count)
-        alpha = int(point_opacity * 255)
+        # Build pydeck data from aggregated rows
+        for row in result.result_rows:
+            lat, lon, count, earliest, latest = row
+            total_records += count
+            point_opacity = min(1.0, base_opacity * count)
+            alpha = int(point_opacity * 255)
 
-        # Determine color based on color mode
-        if color_mode == "species":
-            if len(species_list) == 1:
-                # Single species: use its assigned color
-                r, g, b = species_colors.get(species_list[0], (255, 140, 0))
-            else:
-                # Multi-species: use neutral white
-                r, g, b = 255, 255, 255
-        else:
-            # Single color mode: orange
-            r, g, b = 255, 140, 0
+            data.append({
+                "latitude": lat,
+                "longitude": lon,
+                "count": count,
+                "tooltip": format_tooltip(count, earliest, latest),
+                "radius": point_size,
+                "color": [255, 140, 0, alpha],
+            })
 
-        data.append({
-            "latitude": lat,
-            "longitude": lon,
-            "count": count,
-            "tooltip": format_tooltip(count, species_list, earliest, latest),
-            "radius": point_size,
-            "color": [r, g, b, alpha],
-        })
+        # Histogram query: observation counts in weekly buckets.
+        hist_result = client.query("""
+            SELECT
+                toMonday(toDate(time)) AS week,
+                COUNT(*) AS count
+            FROM species_sightings
+            WHERE species_name = %s
+            GROUP BY week
+            ORDER BY week
+        """, parameters=[selected_species])
+
+        max_count = max((row[1] for row in hist_result.result_rows), default=1)
+        histogram_data = [
+            {
+                "week": row[0].strftime("%Y-%m-%d"),
+                "label": row[0].strftime("%b %d"),
+                "count": row[1],
+                "height_pct": 100 * row[1] / max_count,
+            }
+            for row in hist_result.result_rows
+        ]
 
     # Create pydeck visualization
-    # Use radiusMinPixels and radiusMaxPixels to enforce fixed pixel size
     layer = pdk.Layer(
         "ScatterplotLayer",
         data=data,
@@ -194,40 +154,6 @@ def index():
     dark_bg_style = "<style>html, body { background: #121212 !important; }</style>"
     map_html = map_html.replace("<head>", f"<head>{dark_bg_style}", 1)
 
-    # Histogram query: observation counts in 7-day (weekly) buckets.
-    # Uses the same species filter as the map.
-    if filtering:
-        hist_query = f"""
-            SELECT
-                toMonday(toDate(time)) AS week,
-                COUNT(*) AS count
-            FROM species_sightings
-            WHERE species_name IN ({placeholders})
-            GROUP BY week
-            ORDER BY week
-        """
-        hist_result = client.query(hist_query, parameters=selected_species)
-    else:
-        hist_result = client.query("""
-            SELECT
-                toMonday(toDate(time)) AS week,
-                COUNT(*) AS count
-            FROM species_sightings
-            GROUP BY week
-            ORDER BY week
-        """)
-
-    max_count = max((row[1] for row in hist_result.result_rows), default=1)
-    histogram_data = [
-        {
-            "week": row[0].strftime("%Y-%m-%d"),
-            "label": row[0].strftime("%b %d"),
-            "count": row[1],
-            "height_pct": 100 * row[1] / max_count,
-        }
-        for row in hist_result.result_rows
-    ]
-
     species_counts = load_species_counts()
 
     # Sort species by count in descending order
@@ -245,6 +171,5 @@ def index():
         species_counts=species_counts,
         histogram_data=histogram_data,
         opacity=base_opacity,
-        color_mode=color_mode,
         point_size=point_size,
     )

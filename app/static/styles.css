@@ -119,8 +119,9 @@ body {
     border-radius: 10px;
     margin-left: 8px;
 }
-.species-list input[type="checkbox"] {
+.species-list input[type="radio"] {
     margin-right: 8px;
+    accent-color: #ff8c00;
 }
 .btn-apply {
     width: 100%;
@@ -135,50 +136,6 @@ body {
 }
 .btn-apply:hover {
     background: #e67e00;
-}
-.toggle-links {
-    margin-bottom: 12px;
-    font-size: 13px;
-}
-.toggle-links a {
-    color: #0066cc;
-    cursor: pointer;
-    text-decoration: none;
-}
-.toggle-links a:hover {
-    text-decoration: underline;
-}
-.toggle-links span {
-    color: #999;
-    margin: 0 6px;
-}
-.color-mode-control {
-    margin-bottom: 16px;
-    padding: 12px;
-    background: #fff;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-}
-.color-mode-control .control-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 8px;
-}
-.color-mode-control .radio-label {
-    display: block;
-    font-size: 14px;
-    color: #444;
-    cursor: pointer;
-    padding: 4px 0;
-}
-.color-mode-control .radio-label:hover {
-    color: #ff8c00;
-}
-.color-mode-control input[type="radio"] {
-    margin-right: 8px;
-    accent-color: #ff8c00;
 }
 .opacity-control {
     margin-bottom: 16px;
