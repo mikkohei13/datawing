@@ -51,6 +51,13 @@
                     <input type="range" id="point_size" name="point_size" min="2" max="20" step="1" value="{{ point_size }}"
                         oninput="document.getElementById('point-size-value').textContent = this.value">
                 </div>
+                <div class="color-control">
+                    <label for="color_by">Color by</label>
+                    <select id="color_by" name="color_by">
+                        <option value="fixed" {% if color_by == 'fixed' %}selected{% endif %}>Fixed (orange)</option>
+                        <option value="day_of_year" {% if color_by == 'day_of_year' %}selected{% endif %}>Day of year (rainbow)</option>
+                    </select>
+                </div>
                 <button type="submit" class="btn-apply">Apply</button>
                 <ul class="species-list" id="species-list">
                     {% for species in all_species %}

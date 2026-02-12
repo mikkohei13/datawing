@@ -1,3 +1,4 @@
+import colorsys
 import json
 import os
 from pathlib import Path
@@ -23,6 +24,19 @@ CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 
 def get_client():
     return clickhouse_connect.get_client(host=CLICKHOUSE_HOST)
+
+
+def day_of_year_to_rgb(day):
+    """Convert day-of-year (1-366) to an RGB tuple using a rainbow scale.
+
+    Days 1-181 (Jan 1 – Jun 30) span red to violet.
+    Days above 181 return white.
+    """
+    if day > 181:
+        return [255, 255, 255]
+    hue = (day - 1) / 180 * 0.83  # 0.0 to ~0.83 (red to violet)
+    r, g, b = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+    return [int(r * 255), int(g * 255), int(b * 255)]
 
 
 def format_tooltip(count, earliest, latest):
@@ -71,6 +85,9 @@ def index():
     # Whether dots should scale with the map zoom level
     scale_with_map = request.args.get("scale_with_map") == "on"
 
+    # Color mode: "fixed" (orange) or "day_of_year" (rainbow)
+    color_by = request.args.get("color_by", "fixed")
+
     # Only query data if a species is selected
     total_records = 0
     data = []
@@ -84,7 +101,8 @@ def index():
                 longitude,
                 COUNT(*) AS count,
                 min(time) AS earliest,
-                max(time) AS latest
+                max(time) AS latest,
+                min(dayOfYear(time)) AS min_day
             FROM species_sightings
             WHERE species_name = %s
             GROUP BY latitude, longitude
@@ -92,7 +110,7 @@ def index():
 
         # Build pydeck data from aggregated rows
         for row in result.result_rows:
-            lat, lon, count, earliest, latest = row
+            lat, lon, count, earliest, latest, min_day = row
             total_records += count
             point_opacity = min(1.0, base_opacity * count)
             alpha = int(point_opacity * 255)
@@ -100,13 +118,19 @@ def index():
             # In scale-with-map mode, radius is fixed
             radius_value = 500 if scale_with_map else point_size
 
+            if color_by == "day_of_year":
+                rgb = day_of_year_to_rgb(min_day)
+                color = rgb + [alpha]
+            else:
+                color = [255, 140, 0, alpha]
+
             data.append({
                 "latitude": lat,
                 "longitude": lon,
                 "count": count,
                 "tooltip": format_tooltip(count, earliest, latest),
                 "radius": radius_value,
-                "color": [255, 140, 0, alpha],
+                "color": color,
             })
 
         # Histogram query: observation counts in weekly buckets.
@@ -190,4 +214,5 @@ def index():
         opacity=base_opacity,
         point_size=point_size,
         scale_with_map=scale_with_map,
+        color_by=color_by,
     )
