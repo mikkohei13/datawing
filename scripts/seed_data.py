@@ -11,8 +11,11 @@ import clickhouse_connect
 CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 
 MAX_ROWS = 10000000
+START_YEAR = 2025
+END_YEAR = 2025
+
 BATCH_SIZE = 100000
-DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data.txt"
+DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data-sample-10k.txt"
 
 # Column indices from the TSV file
 COL_SPECIES = 0
@@ -40,7 +43,7 @@ def iter_data_batches(filepath: Path, max_rows: int, batch_size: int):
         batch_size: Number of records per batch.
 
     Yields:
-        Lists of tuples (id, species, time, lat, lon).
+        Lists of tuples (id, species, time, lat, lon, day_of_year, year).
     """
     batch = []
     total_count = 0
@@ -65,12 +68,20 @@ def iter_data_batches(filepath: Path, max_rows: int, batch_size: int):
             if not species or not result_id or not time_str or not lat or not lon:
                 continue
 
+            ts = parse_timestamp(time_str)
+
+            # Filter by year range
+            if ts.year < START_YEAR or ts.year > END_YEAR:
+                continue
+
             batch.append((
                 result_id,
                 species,
-                parse_timestamp(time_str),
+                ts,
                 float(lat),
                 float(lon),
+                ts.timetuple().tm_yday,
+                ts.year,
             ))
             total_count += 1
 
@@ -100,7 +111,9 @@ def create_table(client):
             species_name String,
             time DateTime64(3),
             latitude Float64,
-            longitude Float64
+            longitude Float64,
+            day_of_year Int32,
+            year Int32
         ) ENGINE = MergeTree()
         ORDER BY (species_name, latitude, longitude, time, id)
     """)
@@ -127,7 +140,7 @@ def main():
 
     # Stream data in batches: read and insert each batch
     total_inserted = 0
-    column_names = ["id", "species_name", "time", "latitude", "longitude"]
+    column_names = ["id", "species_name", "time", "latitude", "longitude", "day_of_year", "year"]
 
     for batch in iter_data_batches(DATA_FILE, MAX_ROWS, BATCH_SIZE):
         client.insert(TABLE_NAME, batch, column_names=column_names)

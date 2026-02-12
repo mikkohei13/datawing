@@ -19,13 +19,17 @@ System to visualize large-scale biodiversity occurrence data. Proof of concept, 
 
 ## Run
 
+Start:
+
     docker compose up --build
+
+Insert sample data:
+
+    docker compose exec app python /scripts/seed_data.py
 
 Open http://localhost:5000/ in your browser.
 
-## Seed data
-
-    docker compose exec app python scripts/seed_data.py
+More data is available at http://tun.fi/HR.6578
 
 ## Development principles
 
@@ -33,3 +37,11 @@ Open http://localhost:5000/ in your browser.
 - Avoid over-engineering and premature optimization. Focus on solving the actual problem rather than hypothetical future needs.
 - Keep the architecture simple and understandable for AI-assisted programming tools.
 - Use clear comments to explain why something is done rather than what is done; make the code self-documenting where possible.
+
+## License
+
+Code is licensed under the MIT License.
+
+Sample data in ./data is licensed under Creative Commons Attribution 4.0 International License. Citation:
+
+    Finnish Muuttolintujen kevät -data, University of Jyväskylä. http://tun.fi/HR.6578 Creative Commons Attribution 4.0 International https://creativecommons.org/licenses/by/4.0/

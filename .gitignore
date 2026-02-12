@@ -1,5 +1,8 @@
 
 **/data/**
+!data/mlk-public-data-sample-10k.txt
+
+
 .env
 
 scripts/analyze_grid.py
