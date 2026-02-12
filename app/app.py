@@ -145,15 +145,18 @@ def index():
         """, parameters=[selected_species])
 
         max_count = max((row[1] for row in hist_result.result_rows), default=1)
-        histogram_data = [
-            {
-                "week": row[0].strftime("%Y-%m-%d"),
-                "label": row[0].strftime("%b %d"),
+        histogram_data = []
+        for row in hist_result.result_rows:
+            week_date = row[0]
+            day_of_year = week_date.timetuple().tm_yday
+            r, g, b = day_of_year_to_rgb(day_of_year)
+            histogram_data.append({
+                "week": week_date.strftime("%Y-%m-%d"),
+                "label": week_date.strftime("%b %d"),
                 "count": row[1],
                 "height_pct": 100 * row[1] / max_count,
-            }
-            for row in hist_result.result_rows
-        ]
+                "color": f"rgb({r}, {g}, {b})",
+            })
 
     # Create pydeck visualization
     if scale_with_map:

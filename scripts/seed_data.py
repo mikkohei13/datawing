@@ -13,12 +13,14 @@ CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 MAX_ROWS = 10000000
 START_YEAR = 2025
 END_YEAR = 2025
+PREDICTION_THRESHOLD = 0.8
 
 BATCH_SIZE = 100000
-DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data-sample-10k.txt"
+DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data.txt"
 
 # Column indices from the TSV file
 COL_SPECIES = 0
+COL_PREDICTION = 1
 COL_RESULT_ID = 5
 COL_TIME = 10
 COL_LAT = 17
@@ -35,7 +37,8 @@ def iter_data_batches(filepath: Path, max_rows: int, batch_size: int):
     """Yield batches of species sighting data from a TSV file.
 
     Reads line-by-line and yields batches for memory-efficient processing.
-    Skips rows where species, lat, lon, result_id, or time is empty.
+    Skips rows where prediction < PREDICTION_THRESHOLD, species, lat, lon,
+    result_id, or time is empty.
 
     Args:
         filepath: Path to the TSV data file.
@@ -56,6 +59,16 @@ def iter_data_batches(filepath: Path, max_rows: int, batch_size: int):
                 break
 
             fields = line.rstrip("\n").split("\t")
+
+            # Filter by prediction threshold (second column)
+            if len(fields) <= COL_PREDICTION:
+                continue
+            try:
+                prediction = float(fields[COL_PREDICTION])
+            except (ValueError, TypeError):
+                continue
+            if prediction < PREDICTION_THRESHOLD:
+                continue
 
             # Extract required fields
             species = fields[COL_SPECIES] if len(fields) > COL_SPECIES else ""
@@ -137,6 +150,7 @@ def main():
     print(f"Created table '{TABLE_NAME}'.")
 
     print(f"Loading and inserting up to {MAX_ROWS:,} records from {DATA_FILE}...")
+    print(f"Filtering by year range {START_YEAR}-{END_YEAR} and prediction threshold {PREDICTION_THRESHOLD}...")
 
     # Stream data in batches: read and insert each batch
     total_inserted = 0
