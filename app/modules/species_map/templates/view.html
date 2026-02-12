@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Species Map — Datawing{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="main-panel">
+        <div class="map-container">
+            <iframe srcdoc="{{ map_html | e }}"></iframe>
+        </div>
+    </div>
+    <div class="sidebar">
+        <div class="result-count">{{ result_count }} records in {{ cell_count }} cells</div>
+        <h2>Select Species</h2>
+        <form method="GET" action="/species_map">
+            <div class="opacity-control">
+                <label for="opacity">Opacity: <span id="opacity-value">{{ opacity }}</span></label>
+                <input type="range" id="opacity" name="opacity" min="0" max="1" step="0.05" value="{{ opacity }}"
+                    oninput="document.getElementById('opacity-value').textContent = this.value">
+            </div>
+            {% include "partials/map_controls.html" %}
+            <button type="submit" class="btn-apply">Apply</button>
+            {% include "partials/species_selector.html" %}
+        </form>
+    </div>
+</div>
+{% endblock %}

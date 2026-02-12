@@ -1,0 +1,12 @@
+<ul class="species-list" id="species-list">
+    {% for species in all_species %}
+    <li>
+        <label>
+            <input type="radio" name="species" value="{{ species }}"
+                {% if species == selected_species %}checked{% endif %}>
+            <span class="species-name">{{ species }}</span>
+            <span class="species-count">{{ species_counts.get(species, 0) }}</span>
+        </label>
+    </li>
+    {% endfor %}
+</ul>

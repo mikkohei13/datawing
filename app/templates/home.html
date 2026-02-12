@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Datawing — Home{% endblock %}
+
+{% block content %}
+<div class="home">
+    <h1>Datawing</h1>
+    <p>Biodiversity occurrence data analysis platform</p>
+    <div class="module-grid">
+        {% for mod in modules %}
+        <a href="/{{ mod.name }}" class="module-card">
+            <h2>{{ mod.title }}</h2>
+            <p>{{ mod.description }}</p>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

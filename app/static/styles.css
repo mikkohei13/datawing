@@ -7,9 +7,97 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: #121212;
 }
+/* Nav bar */
+.top-nav {
+    display: flex;
+    align-items: center;
+    height: 42px;
+    background: #1e1e1e;
+    border-bottom: 1px solid #333;
+    padding: 0 16px;
+    gap: 24px;
+}
+.nav-brand {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ff8c00;
+    text-decoration: none;
+}
+.nav-links {
+    display: flex;
+    gap: 4px;
+}
+.nav-links a {
+    font-size: 13px;
+    color: #aaa;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+}
+.nav-links a:hover {
+    color: #fff;
+    background: #333;
+}
+.nav-links a.active {
+    color: #fff;
+    background: #ff8c00;
+}
+
+/* Home page */
+.home {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 42px);
+    color: #ccc;
+}
+.home h1 {
+    font-size: 32px;
+    color: #ff8c00;
+    margin-bottom: 8px;
+}
+.home > p {
+    font-size: 16px;
+    color: #888;
+    margin-bottom: 32px;
+}
+.module-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.module-card {
+    display: block;
+    width: 260px;
+    padding: 24px;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s;
+}
+.module-card:hover {
+    border-color: #ff8c00;
+    background: #252525;
+}
+.module-card h2 {
+    font-size: 18px;
+    color: #fff;
+    margin-bottom: 8px;
+}
+.module-card p {
+    font-size: 14px;
+    color: #888;
+    line-height: 1.4;
+}
+
+/* Module layout */
 .container {
     display: flex;
-    height: 100vh;
+    height: calc(100vh - 42px);
 }
 .main-panel {
     flex: 1;
@@ -225,29 +313,7 @@ body {
 .toggle-label input[type="checkbox"]:checked + .toggle-switch::after {
     transform: translateX(18px);
 }
-.color-control {
-    margin-bottom: 16px;
-    padding: 12px;
-    background: #fff;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-}
-.color-control label {
-    display: block;
-    font-size: 14px;
-    color: #333;
-    margin-bottom: 8px;
-}
-.color-control select {
-    width: 100%;
-    padding: 6px 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background: #fff;
-    color: #333;
-    cursor: pointer;
-}
+
 .point-size-control.disabled {
     opacity: 0.4;
     pointer-events: none;

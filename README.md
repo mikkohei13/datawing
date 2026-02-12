@@ -6,7 +6,7 @@ System to visualize large-scale biodiversity occurrence data. Proof of concept, 
 
 **Tech stack:** Flask, ClickHouse, pydeck (deck.gl), Docker Compose.
 
-**Architecture:** Server-heavy, client-light. The Flask backend does all querying, aggregation, and visualization generation. The browser receives a fully rendered page with no AJAX calls or client-side frameworks. User interactions (filtering, changing settings) trigger full page reloads via GET query parameters.
+**Architecture:** Server-heavy, client-light, modular. The Flask backend does all querying, aggregation, and visualization generation. Analysis and visualization modules live in `app/modules/` and are discovered automatically at startup. The browser receives a fully rendered page with no AJAX calls or client-side frameworks. User interactions (filtering, changing settings) trigger full page reloads via GET query parameters.
 
 **Data flow:**
 1. A seed script reads source data (TSV) and batch-inserts occurrence records into ClickHouse
@@ -30,6 +30,58 @@ Insert sample data:
 Open http://localhost:5000/ in your browser.
 
 More data is available at http://tun.fi/HR.6578
+
+## Creating modules
+
+The app is organized as a set of modules under `app/modules/`. Each module is a directory with a `module.py` and an optional `templates/` subdirectory. Modules are discovered automatically at startup — no registration needed.
+
+### File structure
+
+    app/modules/my_module/
+      module.py
+      templates/
+        view.html          # optional
+
+### module.py contract
+
+Define `TITLE`, `DESCRIPTION`, and a `render(ctx)` function:
+
+```python
+from core import format_tooltip  # shared helpers in app/core.py
+
+TITLE = "My Module"
+DESCRIPTION = "Short description shown on the home page"
+
+def render(ctx):
+    # ctx.db              — ClickHouse client (clickhouse-connect)
+    # ctx.request         — Flask request object (query params via ctx.request.args)
+    # ctx.species_list()  — returns (all_species_sorted, species_counts) tuple
+    # ctx.parse_map_controls() — returns (point_size, scale_with_map) from request
+    # ctx.render_map(data, scale_with_map, point_size) — builds pydeck map HTML
+    # ctx.render_template(name, **kwargs) — renders templates/<name> within base.html
+
+    result = ctx.db.query("SELECT ... FROM species_sightings WHERE ...")
+    # ... process data ...
+    return ctx.render_template("view.html", data=data)
+```
+
+The route is derived from the directory name (`my_module` becomes `/my_module`).
+
+### Templates
+
+Templates use Jinja2 and extend `base.html` (which provides the nav bar). Shared partials are available via `{% include %}`:
+
+- `partials/map_controls.html` — scale-with-map toggle + point size slider (expects `scale_with_map` and `point_size` in context)
+- `partials/species_selector.html` — species radio list (expects `all_species`, `selected_species`, `species_counts`)
+
+### Data access
+
+Modules query the `species_sightings` ClickHouse table directly via `ctx.db`. The table schema:
+
+    species_name String, time DateTime64(3), latitude Float64, longitude Float64,
+    day_of_year Int32, year Int32
+
+See existing modules in `app/modules/` for working examples.
 
 ## Development principles
 
