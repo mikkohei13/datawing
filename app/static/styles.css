@@ -166,8 +166,8 @@ body {
 }
 .sidebar {
     width: 250px;
-    background: #f5f5f5;
-    border-left: 1px solid #ddd;
+    background: #1e1e1e;
+    border-left: 1px solid #333;
     padding: 16px;
     overflow-y: auto;
 }
@@ -175,7 +175,7 @@ body {
     font-size: 14px;
     font-weight: 600;
     color: #26C2FF;
-    background: #e0f4ff;
+    background: #1a2a33;
     padding: 10px 12px;
     border-radius: 6px;
     margin-bottom: 16px;
@@ -184,7 +184,7 @@ body {
 .sidebar h2 {
     font-size: 16px;
     margin-bottom: 12px;
-    color: #333;
+    color: #ccc;
 }
 .species-list {
     list-style: none;
@@ -199,7 +199,7 @@ body {
     align-items: center;
     cursor: pointer;
     font-size: 14px;
-    color: #444;
+    color: #bbb;
 }
 .species-name {
     flex: 1;
@@ -207,7 +207,7 @@ body {
 .species-count {
     font-size: 12px;
     color: #888;
-    background: #e8e8e8;
+    background: #2a2a2a;
     padding: 2px 6px;
     border-radius: 10px;
     margin-left: 8px;
@@ -233,14 +233,14 @@ body {
 .opacity-control {
     margin-bottom: 16px;
     padding: 12px;
-    background: #fff;
+    background: #252525;
     border-radius: 6px;
-    border: 1px solid #ddd;
+    border: 1px solid #333;
 }
 .opacity-control label {
     display: block;
     font-size: 14px;
-    color: #333;
+    color: #bbb;
     margin-bottom: 8px;
 }
 .opacity-control #opacity-value {
@@ -255,14 +255,14 @@ body {
 .point-size-control {
     margin-bottom: 16px;
     padding: 12px;
-    background: #fff;
+    background: #252525;
     border-radius: 6px;
-    border: 1px solid #ddd;
+    border: 1px solid #333;
 }
 .point-size-control label {
     display: block;
     font-size: 14px;
-    color: #333;
+    color: #bbb;
     margin-bottom: 8px;
 }
 .point-size-control #point-size-value {
@@ -277,16 +277,16 @@ body {
 .scale-control {
     margin-bottom: 16px;
     padding: 12px;
-    background: #fff;
+    background: #252525;
     border-radius: 6px;
-    border: 1px solid #ddd;
+    border: 1px solid #333;
 }
 .toggle-label {
     display: flex;
     align-items: center;
     justify-content: space-between;
     font-size: 14px;
-    color: #333;
+    color: #bbb;
     cursor: pointer;
 }
 .toggle-label input[type="checkbox"] {
@@ -296,7 +296,7 @@ body {
     position: relative;
     width: 40px;
     height: 22px;
-    background: #ccc;
+    background: #555;
     border-radius: 11px;
     flex-shrink: 0;
     transition: background 0.2s;
