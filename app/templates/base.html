@@ -14,7 +14,10 @@
 </head>
 <body>
     <nav class="top-nav">
-        <a href="/" class="nav-brand">Datawing</a>
+        <a href="/" class="nav-brand">
+            <img src="{{ url_for('static', filename='datawing_32.png') }}" alt="" width="32" height="32">
+            Datawing
+        </a>
         <div class="nav-links">
             {% for mod in modules %}
             <a href="/{{ mod.name }}" {% if current_module == mod.name %}class="active"{% endif %}>{{ mod.title }}</a>

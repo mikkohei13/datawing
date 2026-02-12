@@ -18,13 +18,18 @@ body {
     gap: 24px;
 }
 .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 16px;
     font-weight: 700;
-    color: #ff8c00;
+    color: #26C2FF;
     text-decoration: none;
+    margin-right: 16px;
 }
 .nav-links {
     display: flex;
+    align-items: center;
     gap: 4px;
 }
 .nav-links a {
@@ -41,7 +46,7 @@ body {
 }
 .nav-links a.active {
     color: #fff;
-    background: #ff8c00;
+    background: #26C2FF;
 }
 
 /* Home page */
@@ -55,7 +60,7 @@ body {
 }
 .home h1 {
     font-size: 32px;
-    color: #ff8c00;
+    color: #26C2FF;
     margin-bottom: 8px;
 }
 .home > p {
@@ -80,7 +85,7 @@ body {
     transition: border-color 0.15s, background 0.15s;
 }
 .module-card:hover {
-    border-color: #ff8c00;
+    border-color: #26C2FF;
     background: #252525;
 }
 .module-card h2 {
@@ -141,14 +146,14 @@ body {
 }
 .histogram-bar {
     width: 100%;
-    background: #ff8c00;
+    background: #26C2FF;
     border-radius: 1px 1px 0 0;
     min-height: 1px;
     opacity: 0.85;
 }
 .histogram-bar-wrapper:hover .histogram-bar {
     opacity: 1;
-    background: #ffa733;
+    background: #5DD1FF;
 }
 .histogram-label {
     font-size: 9px;
@@ -169,8 +174,8 @@ body {
 .result-count {
     font-size: 14px;
     font-weight: 600;
-    color: #ff8c00;
-    background: #fff3e0;
+    color: #26C2FF;
+    background: #e0f4ff;
     padding: 10px 12px;
     border-radius: 6px;
     margin-bottom: 16px;
@@ -209,13 +214,13 @@ body {
 }
 .species-list input[type="radio"] {
     margin-right: 8px;
-    accent-color: #ff8c00;
+    accent-color: #26C2FF;
 }
 .btn-apply {
     width: 100%;
     margin-bottom: 16px;
     padding: 10px;
-    background: #ff8c00;
+    background: #26C2FF;
     color: white;
     border: none;
     border-radius: 4px;
@@ -223,7 +228,7 @@ body {
     font-size: 14px;
 }
 .btn-apply:hover {
-    background: #e67e00;
+    background: #1aa3db;
 }
 .opacity-control {
     margin-bottom: 16px;
@@ -240,12 +245,12 @@ body {
 }
 .opacity-control #opacity-value {
     font-weight: 600;
-    color: #ff8c00;
+    color: #26C2FF;
 }
 .opacity-control input[type="range"] {
     width: 100%;
     cursor: pointer;
-    accent-color: #ff8c00;
+    accent-color: #26C2FF;
 }
 .point-size-control {
     margin-bottom: 16px;
@@ -262,12 +267,12 @@ body {
 }
 .point-size-control #point-size-value {
     font-weight: 600;
-    color: #ff8c00;
+    color: #26C2FF;
 }
 .point-size-control input[type="range"] {
     width: 100%;
     cursor: pointer;
-    accent-color: #ff8c00;
+    accent-color: #26C2FF;
 }
 .scale-control {
     margin-bottom: 16px;
@@ -308,7 +313,7 @@ body {
     transition: transform 0.2s;
 }
 .toggle-label input[type="checkbox"]:checked + .toggle-switch {
-    background: #ff8c00;
+    background: #26C2FF;
 }
 .toggle-label input[type="checkbox"]:checked + .toggle-switch::after {
     transform: translateX(18px);

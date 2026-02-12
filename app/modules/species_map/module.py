@@ -53,7 +53,7 @@ def render(ctx):
                 {
                     "latitude": lat,
                     "longitude": lon,
-                    "color": [255, 140, 0, alpha],
+                    "color": [38, 194, 255, alpha],
                     "tooltip": format_tooltip(count, earliest, latest),
                     "radius": radius_value,
                 }
