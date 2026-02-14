@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Proportion Map — Datawing{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="main-panel">
+        <div class="map-container">
+            <iframe srcdoc="{{ map_html | e }}"></iframe>
+        </div>
+        <div class="color-legend">
+            <div class="color-legend-bar"></div>
+            <div class="color-legend-labels">
+                <span>0×</span>
+                <span>{{ "%.1f"|format(ratio_cap / 2) }}×</span>
+                <span>{{ "%.0f"|format(ratio_cap) }}×</span>
+            </div>
+            {% if expected_proportion %}
+            <div class="color-legend-note">expected proportion: {{ "%.1f"|format(expected_proportion * 100) }} %</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="sidebar">
+        <div class="result-count">{{ result_count }} records in {{ cell_count }} cells</div>
+        <form method="GET" action="/proportion_map">
+            {% include "partials/map_controls.html" %}
+            <button type="submit" class="btn-apply">Apply</button>
+            {% include "partials/species_selector.html" %}
+        </form>
+    </div>
+</div>
+
+<style>
+    .color-legend {
+        padding: 8px 16px;
+    }
+    .color-legend-bar {
+        height: 12px;
+        border-radius: 4px;
+        background: linear-gradient(to right,
+            rgb(0, 0, 255),
+            rgb(0, 255, 255),
+            rgb(0, 255, 0),
+            rgb(255, 255, 0),
+            rgb(255, 0, 0)
+        );
+    }
+    .color-legend-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8em;
+        margin-top: 2px;
+        color: #aaa;
+    }
+    .color-legend-note {
+        font-size: 0.75em;
+        color: #888;
+        margin-top: 2px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
