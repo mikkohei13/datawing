@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.13.0/mapbox-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@deck.gl/jupyter-widget@~9.0.*/dist/index.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #121212; }
+  #deck-container { width: 100vw; height: 100vh; }
+  #deck-container canvas { z-index: 1; background: none; }
+
+  .controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(30, 30, 30, 0.92);
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    z-index: 10;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #ccc;
+    font-size: 13px;
+    user-select: none;
+  }
+  .controls button {
+    background: #26C2FF;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .controls button:hover { background: #1aa3db; }
+  .day-slider {
+    width: 220px;
+    accent-color: #26C2FF;
+    cursor: pointer;
+  }
+  .day-label {
+    min-width: 130px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+<div id="deck-container"></div>
+<div class="controls">
+  <button id="playBtn" onclick="togglePlay()">Pause</button>
+  <input type="range" class="day-slider" id="daySlider" min="1" max="365" value="1"
+    oninput="scrubTo(parseInt(this.value))">
+  <span class="day-label" id="dayLabel">Day 1 — Jan 1</span>
+</div>
+
+<script>
+  // Point data: each element is [latitude, longitude, day_of_year]
+  const DATA = {{ points_json | safe }};
+  const FADE_DAYS = {{ fade_days }};
+  const SPEED_DPS = {{ speed }};
+  const POINT_SIZE = {{ point_size }};
+  const SCALE_WITH_MAP = {{ 'true' if scale_with_map else 'false' }};
+
+  let currentDay = 1;
+  let playing = true;
+
+  // Pre-compute month labels for day-of-year display
+  const DAY_LABELS = [];
+  (function() {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const daysInMonth = [31,29,31,30,31,30,31,31,30,31,30,31];
+    let doy = 0;
+    for (let m = 0; m < 12; m++) {
+      for (let d = 1; d <= daysInMonth[m]; d++) {
+        DAY_LABELS[doy] = months[m] + ' ' + d;
+        doy++;
+      }
+    }
+  })();
+
+  function dayLabel(day) {
+    return 'Day ' + day + ' \u2014 ' + (DAY_LABELS[day - 1] || '');
+  }
+
+  function createLayer() {
+    const cd = currentDay;
+    const fd = FADE_DAYS;
+    return new deck.ScatterplotLayer({
+      id: 'spread',
+      data: DATA,
+      getPosition: d => [d[1], d[0]],
+      getFillColor: d => {
+        const age = cd - d[2];
+        if (age < 0 || age > fd) return [0, 0, 0, 0];
+        const alpha = 255 * (1 - age / fd);
+        return [38, 194, 255, alpha];
+      },
+      getRadius: SCALE_WITH_MAP ? 500 : POINT_SIZE,
+      radiusMinPixels: SCALE_WITH_MAP ? 1 : POINT_SIZE,
+      radiusMaxPixels: SCALE_WITH_MAP ? 10000 : POINT_SIZE,
+      updateTriggers: { getFillColor: cd },
+    });
+  }
+
+  // Initialize the map using the same pattern as pydeck (proven to work)
+  const container = document.getElementById('deck-container');
+  const jsonInput = {
+    "initialViewState": {
+      "latitude": 65.062,
+      "longitude": 26.719,
+      "zoom": 5
+    },
+    "layers": [],
+    "mapProvider": "carto",
+    "mapStyle": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+    "views": [{"@@type": "MapView", "controller": true}]
+  };
+
+  const deckInstance = createDeck({
+    container,
+    jsonInput,
+    tooltip: null,
+    customLibraries: null,
+    configuration: null
+  });
+
+  // Apply the animated layer once the deck is ready
+  deckInstance.setProps({ layers: [createLayer()] });
+
+  function updateDisplay() {
+    document.getElementById('daySlider').value = currentDay;
+    document.getElementById('dayLabel').textContent = dayLabel(currentDay);
+  }
+
+  function scrubTo(day) {
+    currentDay = day;
+    deckInstance.setProps({ layers: [createLayer()] });
+    updateDisplay();
+  }
+
+  function togglePlay() {
+    playing = !playing;
+    document.getElementById('playBtn').textContent = playing ? 'Pause' : 'Play';
+  }
+
+  // Animation loop driven by SPEED_DPS (days per second)
+  const intervalMs = 1000 / SPEED_DPS;
+  setInterval(() => {
+    if (!playing) return;
+    currentDay++;
+    if (currentDay > 365) currentDay = 1;
+    deckInstance.setProps({ layers: [createLayer()] });
+    updateDisplay();
+  }, intervalMs);
+</script>
+</body>
+</html>

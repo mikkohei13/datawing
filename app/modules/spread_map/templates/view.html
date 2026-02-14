@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Spread Map — Datawing{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="main-panel">
+        <div class="map-container">
+            <iframe srcdoc="{{ map_html | e }}"></iframe>
+        </div>
+    </div>
+    <div class="sidebar">
+        <div class="result-count">{{ result_count }} records in {{ cell_count }} cells</div>
+        <form method="GET" action="/spread_map">
+            <div class="opacity-control">
+                <label for="fade_days">Fade days: <span id="fade-days-value" style="font-weight:600;color:#26C2FF">{{ fade_days }}</span></label>
+                <input type="range" id="fade_days" name="fade_days" min="1" max="60" step="1" value="{{ fade_days }}"
+                    oninput="document.getElementById('fade-days-value').textContent = this.value">
+            </div>
+            <div class="opacity-control">
+                <label for="speed">Speed: <span id="speed-value" style="font-weight:600;color:#26C2FF">{{ speed }}</span> days/sec</label>
+                <input type="range" id="speed" name="speed" min="5" max="100" step="5" value="{{ speed }}"
+                    oninput="document.getElementById('speed-value').textContent = this.value">
+            </div>
+            {% include "partials/map_controls.html" %}
+            <button type="submit" class="btn-apply">Apply</button>
+            {% include "partials/species_selector.html" %}
+        </form>
+    </div>
+</div>
+{% endblock %}

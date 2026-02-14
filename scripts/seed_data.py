@@ -10,10 +10,10 @@ import clickhouse_connect
 
 CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 
-MAX_ROWS = 10000000
-START_YEAR = 2025
+MAX_ROWS = 30000000
+START_YEAR = 2024
 END_YEAR = 2025
-PREDICTION_THRESHOLD = 0.8
+PREDICTION_THRESHOLD = 0.7
 
 BATCH_SIZE = 100000
 DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data.txt"
@@ -74,11 +74,14 @@ def iter_data_batches(filepath: Path, max_rows: int, batch_size: int):
             species = fields[COL_SPECIES] if len(fields) > COL_SPECIES else ""
             result_id = fields[COL_RESULT_ID] if len(fields) > COL_RESULT_ID else ""
             time_str = fields[COL_TIME] if len(fields) > COL_TIME else ""
-            lat = fields[COL_LAT] if len(fields) > COL_LAT else ""
-            lon = fields[COL_LON] if len(fields) > COL_LON else ""
+            try:
+                lat = round(float(fields[COL_LAT]), 2) if len(fields) > COL_LAT and fields[COL_LAT] else None
+                lon = round(float(fields[COL_LON]), 2) if len(fields) > COL_LON and fields[COL_LON] else None
+            except (ValueError, TypeError):
+                continue
 
             # Skip row if any required field is empty
-            if not species or not result_id or not time_str or not lat or not lon:
+            if not species or not result_id or not time_str or lat is None or lon is None:
                 continue
 
             ts = parse_timestamp(time_str)
@@ -91,8 +94,8 @@ def iter_data_batches(filepath: Path, max_rows: int, batch_size: int):
                 result_id,
                 species,
                 ts,
-                float(lat),
-                float(lon),
+                lat,
+                lon,
                 ts.timetuple().tm_yday,
                 ts.year,
             ))
