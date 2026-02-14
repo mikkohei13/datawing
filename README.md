@@ -27,7 +27,7 @@ Insert sample data:
 
     docker compose exec app python /scripts/seed_data.py
 
-Open http://localhost:5000/ in your browser.
+Open http://localhost:5001/ in your browser.
 
 More data is available at http://tun.fi/HR.6578
 
