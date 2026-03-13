@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Temporal Quantile Map — Datawing{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="main-panel">
+        <div class="map-container">
+            <iframe srcdoc="{{ map_html | e }}"></iframe>
+        </div>
+        <div class="histogram-container">
+            <div class="histogram-bars">
+                {% for bucket in histogram_data %}
+                <div class="histogram-bar-wrapper" title="{{ bucket.week }}: {{ bucket.count }} records">
+                    <div class="histogram-bar" style="height: {{ bucket.height_pct }}%; background: {{ bucket.color }};"></div>
+                    <div class="histogram-label">{{ bucket.label }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="sidebar">
+        <div class="result-count">{{ result_count }} records in {{ cell_count }} cells</div>
+        <form method="GET" action="/temporal_quantile_map">
+            <div class="opacity-control">
+                <label for="quantile">Quantile: <span id="quantile-value">{{ quantile_percent }}</span>%</label>
+                <input
+                    type="range"
+                    id="quantile"
+                    name="quantile"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="{{ quantile }}"
+                    oninput="document.getElementById('quantile-value').textContent = (this.value * 100).toFixed(0)">
+            </div>
+            {% include "partials/map_controls.html" %}
+            <button type="submit" class="btn-apply">Apply</button>
+            {% include "partials/species_selector.html" %}
+        </form>
+    </div>
+</div>
+{% endblock %}

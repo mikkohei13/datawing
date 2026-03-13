@@ -78,8 +78,12 @@ Templates use Jinja2 and extend `base.html` (which provides the nav bar). Shared
 
 Modules query the `species_sightings` ClickHouse table directly via `ctx.db`. The table schema:
 
-    species_name String, time DateTime64(3), latitude Float64, longitude Float64,
-    day_of_year Int32, year Int32
+    species_name String
+    time DateTime64(3)
+    latitude Float64
+    longitude Float64
+    day_of_year Int32
+    year Int32
 
 See existing modules in `app/modules/` for working examples.
 
