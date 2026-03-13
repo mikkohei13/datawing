@@ -10,12 +10,12 @@ import clickhouse_connect
 
 CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 
-MAX_ROWS = 30000000
+MAX_ROWS = 30_000_000
 START_YEAR = 2024
 END_YEAR = 2025
 PREDICTION_THRESHOLD = 0.7
 
-BATCH_SIZE = 100000
+BATCH_SIZE = 100_000
 DATA_FILE = Path(__file__).parent.parent / "data" / "mlk-public-data.txt"
 
 # Column indices from the TSV file

@@ -60,7 +60,13 @@ class ModuleContext:
             point_size = max(2, min(20, point_size))
         except (ValueError, TypeError):
             point_size = 6
-        scale_with_map = self.request.args.get("scale_with_map") == "on"
+        scale_arg = self.request.args.get("scale_with_map")
+        if scale_arg is None:
+            # Default to on for first load (no map-control args yet).
+            # If controls were submitted and checkbox is missing, treat as off.
+            scale_with_map = "point_size" not in self.request.args
+        else:
+            scale_with_map = scale_arg == "on"
         return point_size, scale_with_map
 
     def render_map(self, data, scale_with_map=False, point_size=6):

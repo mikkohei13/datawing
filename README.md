@@ -90,6 +90,20 @@ See existing modules in `app/modules/` for working examples.
 - Keep the architecture simple and understandable for AI-assisted programming tools.
 - Use clear comments to explain why something is done rather than what is done; make the code self-documenting where possible.
 
+## Deployment options
+
+### As a personal project:
+
+Hetzner CX22 VPS:
+
+- You already have docker-compose.yml — just docker compose up -d on the server
+- ClickHouse wants RAM and disk, which is cheapest on a VPS
+- 10M rows is trivial for ClickHouse on a 4 GB machine
+- No vendor lock-in or platform-specific config
+- It's the lowest cost option that won't require compromises
+- The deployment workflow would be: install Docker on the VPS, clone your repo, add a Caddy/nginx reverse proxy for HTTPS, and run docker compose up -d. You could also set up a simple CI/CD pipeline with GitHub Actions to auto-deploy on push.
+
+
 ## License
 
 Code is licensed under the MIT License.
